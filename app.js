@@ -113,6 +113,7 @@ async function updateBalance() {
   }
 }
 
+
 const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
 function updateCountdown() {
   const now = Math.floor(Date.now() / 1000);

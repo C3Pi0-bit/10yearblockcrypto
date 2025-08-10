@@ -14,9 +14,9 @@ All funds are **locked for 10 years** and will be released according to a reward
   - Option 1: 15% to the biggest donor.
   - Option 2: 10% to the second major donor
   - Option 3: 5% to the third largest donor
-  - 
-  - DONORS RECEIVE % OF THE TOTAL AMOUNT OF ALL DONATIONS OVER 10 TEARS
-  - 
+    
+  - DONORS RECEIVE % OF THE TOTAL AMOUNT OF ALL DONATIONS OVER 10 YEARS
+    
 - 💰 **Direct ETH Donations** via MetaMask.
 - 📊 **Live Balance & Countdown** displayed on the website.
 

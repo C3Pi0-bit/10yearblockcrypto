@@ -1,4 +1,4 @@
-const contractAddress = "0xEA561Dd7497500d7Ca445819C6cEb8C30763b811";
+const contractAddress = "0xEA561Dd7497500d7Ca445819C5C372DdfDAb890589A143C8271ee74"; // твій контракт
 const abi = [
   { inputs: [{ internalType: "address", name: "_beneficiary", type: "address" }], stateMutability: "nonpayable", type: "constructor" },
   { stateMutability: "payable", type: "receive" },
@@ -15,13 +15,13 @@ function init() {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- заміни на свій Infura Project ID
+        infuraId: "ТВОЙ_INFURA_ID"  // <- заміни на свій Infura Project ID
       }
     }
   };
 
   web3Modal = new window.Web3Modal.default({
-    cacheProvider: false,  // завжди показуємо вибір гаманця
+    cacheProvider: false,
     providerOptions
   });
 }
@@ -34,13 +34,45 @@ window.onload = () => {
 
 async function connect() {
   try {
-    const externalProvider = await web3Modal.connect();  // відкриває вибір гаманця
+    const externalProvider = await web3Modal.connect();
     provider = new ethers.providers.Web3Provider(externalProvider);
     signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     const address = await signer.getAddress();
     alert("Wallet connected: " + address);
+
+    updateBalance();
+    updateTopDonors();
+  } catch (err) {
+    alert("Connection failed: " + err.message);
+    console.error(err);
+  }
+}
+
+async function connectWalletConnect() {
+  try {
+    const providerOptions = {
+      walletconnect: {
+        package: window.WalletConnectProvider.default,
+        options: {
+          infuraId: "ТВОЙ_INFURA_ID"  // <- заміни на свій Infura Project ID
+        }
+      }
+    };
+
+    const web3ModalWC = new window.Web3Modal.default({
+      cacheProvider: false,
+      providerOptions
+    });
+
+    const externalProvider = await web3ModalWC.connectTo("walletconnect");
+    provider = new ethers.providers.Web3Provider(externalProvider);
+    signer = provider.getSigner();
+    contract = new ethers.Contract(contractAddress, abi, signer);
+
+    const address = await signer.getAddress();
+    alert("Wallet connected via WalletConnect: " + address);
 
     updateBalance();
     updateTopDonors();
@@ -112,7 +144,6 @@ async function updateBalance() {
     document.getElementById("balance").innerText = "---";
   }
 }
-
 
 const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
 function updateCountdown() {

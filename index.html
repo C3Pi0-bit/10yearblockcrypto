@@ -9,7 +9,7 @@
 <body>
   <h1>💼 Education Vault</h1>
   <div class="container">
-    <p><b>Contract Address:</b> 0xEA561Dd7497500d7Ca445819C6cEb8C30763b811</p>
+    <p><b>Contract Address:</b> <span id="contractAddress">Loading...</span></p>
 
     <div class="description">
       <p>Hello my dear friend! If you are here, you are a crypto-human — and so am I! I deeply believe in cryptocurrency, and that’s why I created this smart contract for donations, which will be locked for 10 whole years!!!</p>
@@ -64,23 +64,15 @@
   <script src="app.js"></script>
 
   <script>
-    document.getElementById("connectBtn").addEventListener("click", async () => {
-      await connect();
-      try {
-        const addr = await signer.getAddress();
-        document.getElementById("walletAddress").innerText = shortAddress(addr);
-      } catch {
-        document.getElementById("walletAddress").innerText = "Not connected";
-      }
-    });
-
-    document.getElementById("donateBtn").addEventListener("click", donate);
-    document.getElementById("releaseBtn").addEventListener("click", release);
+    // Відображення скороченої адреси контракту при завантаженні
+    const fullContractAddress = "0xEA561Dd7497500d7Ca445819C6cEb8C30763b811";
 
     function shortAddress(address) {
       if (!address) return "";
       return address.slice(0, 6) + "..." + address.slice(-4);
     }
+
+    document.getElementById("contractAddress").innerText = shortAddress(fullContractAddress);
   </script>
 </body>
 </html>

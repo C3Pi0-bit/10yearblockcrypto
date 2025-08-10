@@ -60,13 +60,3 @@ input[type="number"] {
 .top-donors h3 {
   margin-top: 0;
 }
-
-/* Додаємо стиль для адреси контракту, щоб не вилізала за межі */
-#contractAddress {
-  display: inline-block;
-  font-weight: bold;
-  font-family: monospace;
-  word-break: break-all;
-}
-
-

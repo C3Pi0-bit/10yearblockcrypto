@@ -3,76 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Education Vault - WalletConnect v2 Example</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom right, #e6f0ff, #fdf6e3);
-      color: #222;
-      margin: 0;
-      padding: 2rem;
-    }
-    h1 {
-      text-align: center;
-      color: #003366;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: #ffffffcc;
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    button {
-      background-color: #003366;
-      color: white;
-      border: none;
-      padding: 1rem 1.5rem;
-      font-size: 1rem;
-      border-radius: 12px;
-      cursor: pointer;
-      margin-top: 0.5rem;
-    }
-    button:hover {
-      background-color: #0059b3;
-    }
-    input[type="number"] {
-      padding: 0.7rem;
-      width: 100%;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-    }
-    .section {
-      margin-top: 2rem;
-    }
-    .description {
-      background-color: #f9f9f9;
-      padding: 1rem;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      border-left: 4px solid #003366;
-      max-height: none;
-    }
-    .top-donors {
-      background: #e0f0ff;
-      padding: 1rem;
-      border-radius: 12px;
-      margin-top: 1rem;
-      color: #003366;
-    }
-    .top-donors h3 {
-      margin-top: 0;
-    }
-    #contractAddress {
-      font-family: monospace;
-      font-weight: bold;
-      word-break: break-all;
-    }
-  </style>
+  <title>EducationVault Interface</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>💼 Education Vault</h1>
@@ -91,7 +23,7 @@
       <p id="walletAddress" style="margin-top: 0.5rem; font-family: monospace; font-weight: bold;"></p>
     </div>
 
-    <p>If the wallet does not connect, I leave the wallet address:</p>
+    <p>If the wallet does not connect, here is the wallet address:</p>
     <p><b>Address:</b> 0xda948b819C5C372DdfDAb890589A143C8271ee74</p>
 
     <div class="section">
@@ -122,170 +54,11 @@
     </div>
   </div>
 
-  <!-- ethers.js -->
+  <!-- Підключаємо бібліотеки -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://unpkg.com/web3modal@1.9.5/dist/index.js"></script>
+  <script src="https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
-  <!-- Web3Modal v2 & WalletConnect v2 -->
-  <script type="module">
-    import { Web3Modal } from "https://unpkg.com/@web3modal/html@2.0.0-beta.6/dist/index.js";
-    import { EthereumClient, w3mConnectors, w3mProvider } from "https://unpkg.com/@web3modal/ethereum@2.0.0-beta.6/dist/index.js";
-    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
-
-    const contractAddress = "0xEA561Dd7497500d7Ca445819C6cEb8C30763b811";
-    const abi = [
-      { inputs: [{ internalType: "address", name: "_beneficiary", type: "address" }], stateMutability: "nonpayable", type: "constructor" },
-      { stateMutability: "payable", type: "receive" },
-      { inputs: [], name: "beneficiary", outputs: [{ internalType: "address", name: "", type: "address" }], stateMutability: "view", type: "function" },
-      { inputs: [], name: "getBalance", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-      { inputs: [], name: "getTopDonors", outputs: [{ internalType: "address[3]", name: "", type: "address[3]" }], stateMutability: "view", type: "function" },
-      { inputs: [], name: "release", outputs: [], stateMutability: "nonpayable", type: "function" }
-    ];
-
-    // Замініть на свій Infura Project ID
-    const INFURA_ID = "YOUR_INFURA_PROJECT_ID";
-
-    // Підключаємо провайдера з WalletConnect v2 через Infura
-    const chains = [1]; // mainnet, замінити якщо потрібно інші мережі
-
-    const provider = w3mProvider({ projectId: INFURA_ID });
-
-    const connectors = w3mConnectors({ version: 2, chains, projectId: INFURA_ID });
-
-    const ethereumClient = new EthereumClient({
-      appName: "Education Vault",
-      appLogoUrl: "", // можна URL логотипу або залишити порожнім
-      chains,
-      connectors,
-      provider
-    });
-
-    const web3Modal = new Web3Modal({
-      projectId: INFURA_ID,
-      themeMode: "light",
-      ethereumClient
-    });
-
-    let ethersProvider;
-    let signer;
-    let contract;
-
-    async function connect() {
-      try {
-        // Відкриваємо модалку вибору гаманця
-        await web3Modal.openModal();
-
-        // Підключаємо провайдера
-        const externalProvider = await ethereumClient.getProvider();
-
-        ethersProvider = new ethers.providers.Web3Provider(externalProvider);
-        signer = ethersProvider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
-
-        const userAddress = await signer.getAddress();
-        document.getElementById("walletAddress").innerText = userAddress;
-
-        updateBalance();
-        updateTopDonors();
-
-        // Закриваємо модал
-        web3Modal.closeModal();
-      } catch (error) {
-        alert("Failed to connect wallet: " + error.message);
-        console.error(error);
-      }
-    }
-
-    async function donate() {
-      try {
-        const amount = document.getElementById("donateAmount").value;
-        if (!amount || isNaN(amount) || Number(amount) <= 0) {
-          alert("Please enter a valid amount");
-          return;
-        }
-        const tx = await signer.sendTransaction({
-          to: contractAddress,
-          value: ethers.utils.parseEther(amount)
-        });
-        await tx.wait();
-        alert("Donation successful!");
-        updateBalance();
-        updateTopDonors();
-      } catch (error) {
-        alert("Donation failed: " + error.message);
-        console.error(error);
-      }
-    }
-
-    async function release() {
-      try {
-        const tx = await contract.release();
-        await tx.wait();
-        alert("Funds released!");
-        updateBalance();
-      } catch (error) {
-        alert("Release failed: " + error.message);
-        console.error(error);
-      }
-    }
-
-    async function updateBalance() {
-      try {
-        const balance = await contract.getBalance();
-        const eth = ethers.utils.formatEther(balance);
-        document.getElementById("balance").innerText = parseFloat(eth).toFixed(4);
-      } catch {
-        document.getElementById("balance").innerText = "---";
-      }
-    }
-
-    async function updateTopDonors() {
-      try {
-        const [d1, d2, d3] = await contract.getTopDonors();
-        const list = document.getElementById("topDonorsList");
-        list.innerHTML = "";
-        list.innerHTML += `<li>🥇 ${shortAddress(d1)}</li>`;
-        list.innerHTML += `<li>🥈 ${shortAddress(d2)}</li>`;
-        list.innerHTML += `<li>🥉 ${shortAddress(d3)}</li>`;
-      } catch (error) {
-        console.error(error);
-        document.getElementById("topDonorsList").innerHTML = "<li>Failed to load top donors</li>";
-      }
-    }
-
-    function shortAddress(address) {
-      if (!address) return "";
-      return address.slice(0, 6) + "..." + address.slice(-4);
-    }
-
-    const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
-    function updateCountdown() {
-      const now = Math.floor(Date.now() / 1000);
-      let secondsLeft = unlockTimestamp - now;
-
-      if (secondsLeft < 0) {
-        document.getElementById("countdown").innerText = "Unlocked!";
-        return;
-      }
-
-      const days = Math.floor(secondsLeft / (3600 * 24));
-      secondsLeft %= 3600 * 24;
-      const hours = Math.floor(secondsLeft / 3600);
-      secondsLeft %= 3600;
-      const minutes = Math.floor(secondsLeft / 60);
-      const seconds = secondsLeft % 60;
-
-      document.getElementById("countdown").innerText =
-        `${days} days ${hours}h ${minutes}m ${seconds}s`;
-    }
-
-    window.onload = () => {
-      updateCountdown();
-      setInterval(updateCountdown, 1000);
-
-      document.getElementById("connectBtn").onclick = connect;
-      document.getElementById("donateBtn").onclick = donate;
-      document.getElementById("releaseBtn").onclick = release;
-    };
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

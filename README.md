@@ -2,7 +2,6 @@
 
 
 ![Main Logo](https://raw.githubusercontent.com/C3Pi0-bit/10yearblockcrypto/main/logo1.png)
-![Secondary Logo](https://raw.githubusercontent.com/C3Pi0-bit/10yearblockcrypto/main/logo2.jpg)
 
 **EducationVault** is a smart contract on the Ethereum blockchain created to collect ETH donations for a child's future education.  
 All funds are **locked for 10 years** and will be released according to a reward system for top donors.

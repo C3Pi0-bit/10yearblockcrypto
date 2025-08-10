@@ -18,20 +18,15 @@ function init() {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa" // <- встав свій Infura Project ID сюди
+        infuraId: "499eccaaa1c34321be3edd18295da9fa" // <- заміни на свій Infura ID
       }
     }
   };
 
   web3Modal = new window.Web3Modal.default({
-    cacheProvider: true,
+    cacheProvider: false,
     providerOptions
   });
-
-  // Показуємо повідомлення для мобільних
-  if (/Mobi|Android/i.test(navigator.userAgent)) {
-    document.getElementById("mobileNotice").style.display = "block";
-  }
 }
 
 function shortAddress(address) {
@@ -47,36 +42,28 @@ async function connect() {
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     const userAddress = await signer.getAddress();
+    alert("Wallet connected: " + shortAddress(userAddress));
     document.getElementById("walletAddress").innerText = userAddress;
 
-    await updateBalance();
-    await updateTopDonors();
+    // Ховаємо повідомлення для мобільних після успішного підключення
+    document.getElementById("mobileNotice").style.display = "none";
 
-    alert("Wallet connected: " + shortAddress(userAddress));
+    updateBalance();
+    updateTopDonors();
   } catch (err) {
     alert("Connection failed: " + err.message);
     console.error(err);
   }
 }
 
-async function autoConnect() {
-  if (web3Modal.cachedProvider) {
-    try {
-      await connect();
-    } catch (e) {
-      console.log("Auto connect failed:", e);
-    }
-  }
-}
-
 async function donate() {
-  if (!signer) {
-    alert("Please connect your wallet first.");
-    return;
-  }
   const amount = document.getElementById("donateAmount").value;
   if (!amount || isNaN(amount) || Number(amount) <= 0) {
     alert("Enter a valid ETH amount");
+    return;
+  }
+  if (!signer) {
+    alert("Please connect your wallet first");
     return;
   }
   try {
@@ -86,8 +73,8 @@ async function donate() {
     });
     await tx.wait();
     alert("Donation successful!");
-    await updateBalance();
-    await updateTopDonors();
+    updateBalance();
+    updateTopDonors();
   } catch (err) {
     alert("Error: " + err.message);
     console.error(err);
@@ -96,30 +83,39 @@ async function donate() {
 
 async function release() {
   if (!contract) {
-    alert("Please connect your wallet first.");
+    alert("Please connect your wallet first");
     return;
   }
   try {
     const tx = await contract.release();
     await tx.wait();
     alert("Funds released!");
-    await updateBalance();
+    updateBalance();
   } catch (err) {
     alert("Error: " + err.message);
+    console.error(err);
   }
 }
 
 async function updateBalance() {
+  if (!contract) {
+    document.getElementById("balance").innerText = "---";
+    return;
+  }
   try {
     const balance = await contract.getBalance();
     const eth = ethers.utils.formatEther(balance);
     document.getElementById("balance").innerText = parseFloat(eth).toFixed(4);
-  } catch (err) {
+  } catch {
     document.getElementById("balance").innerText = "---";
   }
 }
 
 async function updateTopDonors() {
+  if (!contract) {
+    document.getElementById("topDonorsList").innerHTML = "<li>Connect wallet to see top donors</li>";
+    return;
+  }
   try {
     const [d1, d2, d3] = await contract.getTopDonors();
     const list = document.getElementById("topDonorsList");
@@ -156,21 +152,10 @@ function updateCountdown() {
 
 window.onload = () => {
   init();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
 
   document.getElementById("connectBtn").onclick = connect;
   document.getElementById("donateBtn").onclick = donate;
   document.getElementById("releaseBtn").onclick = release;
-
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
-
-  autoConnect();
-
-  window.addEventListener("focus", async () => {
-    if (web3Modal && !signer) {
-      try {
-        await connect();
-      } catch {}
-    }
-  });
 };

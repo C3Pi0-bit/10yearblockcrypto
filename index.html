@@ -20,6 +20,7 @@
 
     <div class="section">
       <button id="connectBtn">🔌 Connect Wallet</button>
+      <button id="walletConnectBtn">📱 Connect via WalletConnect</button>
       <p>Connected Wallet: <span id="walletAddress">Not connected</span></p>
     </div>
 
@@ -75,6 +76,17 @@
   <script>
     document.getElementById("connectBtn").addEventListener("click", async () => {
       await connect();
+      const addressSpan = document.getElementById("walletAddress");
+      try {
+        const addr = await signer.getAddress();
+        addressSpan.innerText = addr;
+      } catch {
+        addressSpan.innerText = "Not connected";
+      }
+    });
+
+    document.getElementById("walletConnectBtn").addEventListener("click", async () => {
+      await connectWalletConnect();
       const addressSpan = document.getElementById("walletAddress");
       try {
         const addr = await signer.getAddress();

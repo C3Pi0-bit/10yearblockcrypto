@@ -9,7 +9,7 @@
 <body>
   <h1>💼 Education Vault</h1>
   <div class="container">
-    <p><b>Contract Address:</b> 0xEA561Dd7497500d7Ca445819C6cEb8C30763b811</p>
+    <p><b>Contract Address:</b> <span id="contractAddress">Loading...</span></p>
 
     <div class="description">
       <p>Hello my dear friend! If you are here, you are a crypto-human — and so am I! I deeply believe in cryptocurrency, and that’s why I created this smart contract for donations, which will be locked for 10 whole years!!!</p>
@@ -54,37 +54,25 @@
     </div>
   </div>
 
-  <!-- Підключаємо ethers.js -->
+  <!-- ethers.js -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
-  <!-- Підключаємо Web3Modal і WalletConnect -->
+  <!-- Web3Modal and WalletConnect -->
   <script src="https://unpkg.com/web3modal@1.9.5/dist/index.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
-  <!-- Перевірка, що ethers завантажений -->
-  <script>
-    if (typeof ethers === "undefined") {
-      alert("ethers.js не завантажений! Перевір порядок підключення скриптів.");
-    }
-  </script>
-
-  <!-- Підключаємо твій основний скрипт -->
   <script src="app.js"></script>
 
   <script>
-    document.getElementById("connectBtn").addEventListener("click", async () => {
-      await connect();
-      const addressSpan = document.getElementById("walletAddress");
-      try {
-        const addr = await signer.getAddress();
-        addressSpan.innerText = addr;
-      } catch {
-        addressSpan.innerText = "Not connected";
-      }
-    });
+    // Відображення скороченої адреси контракту при завантаженні
+    const fullContractAddress = "0xEA561Dd7497500d7Ca445819C6cEb8C30763b811";
 
-    document.getElementById("donateBtn").addEventListener("click", donate);
-    document.getElementById("releaseBtn").addEventListener("click", release);
+    function shortAddress(address) {
+      if (!address) return "";
+      return address.slice(0, 6) + "..." + address.slice(-4);
+    }
+
+    document.getElementById("contractAddress").innerText = shortAddress(fullContractAddress);
   </script>
 </body>
 </html>

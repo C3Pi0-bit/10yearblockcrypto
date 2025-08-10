@@ -1,32 +1,69 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Донати ETH</title>
+  <title>EducationVault Interface</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <h1>💼 Education Vault</h1>
   <div class="container">
-    <h1>Підключення гаманця та донати ETH</h1>
+    <p><b>Contract Address:</b> 0xEA561Dd7497500d7Ca445819C6cEb8C30763b811</p>
 
-    <button id="connectBtn">Підключити гаманець</button>
+    <div class="description">
+      <p>Hello my dear friend! If you are here, you are a crypto-human — and so am I! I deeply believe in cryptocurrency, and that’s why I created this smart contract for donations, which will be locked for 10 whole years!!!</p>
+      <p>Why? Through this experiment, I want to show people that crypto is our future — a powerful financial capital that can help humanity. The funds donated will be unlocked in 10 years. The person who donated the most will receive 15% of the total, second place gets 10%, and third place 5%.</p>
+      <p>The rest of the funds will support a child's education (who will be 17 years old then) and charitable causes — helping sick children.</p>
+      <p>Your small contribution today could change someone’s life in 10 years. Thank you for being here. Thank you for donating. May your crypto portfolio grow strong!</p>
+    </div>
 
-    <div id="walletInfo" class="hidden">
-      <p>Підключено: <span id="walletAddress"></span></p>
+    <div class="section">
+      <button onclick="connect()">🔌 Connect MetaMask</button>
+    </div>
 
-      <label for="donateAmount">Сума для донату (ETH):</label>
-      <input type="number" id="donateAmount" min="0" step="0.0001" placeholder="0.01" />
+    <p>If the wallet does not connect, I leave the wallet address:</p>
+    <p><b>Address:</b> 0xda948b819C5C372DdfDAb890589A143C8271ee74</p>
 
-      <button id="sendBtn">Надіслати</button>
+    <div class="section">
+      <h3>💰 Contract Balance: <span id="balance">---</span> ETH</h3>
+    </div>
 
-      <p id="status"></p>
+    <div class="section">
+      <h3>⏳ Time until unlock:</h3>
+      <div id="countdown" style="font-size: 1.2rem; font-weight: bold; color: #003366;">Loading...</div>
+    </div>
+
+    <div class="section">
+      <h3>📥 Donate ETH</h3>
+      <input type="number" id="donateAmount" placeholder="Amount in ETH" step="0.001" />
+      <button onclick="donate()">Donate</button>
+    </div>
+
+    <div class="section">
+      <h3>🔓 Trigger release()</h3>
+      <button onclick="release()">Unlock Funds</button>
+    </div>
+
+    <div class="section top-donors">
+      <h3>🏆 Top 3 Donors:</h3>
+      <ol id="topDonorsList">
+        <li>Loading...</li>
+      </ol>
     </div>
   </div>
 
-  <!-- Скрипти ethers та WalletConnect -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
+  <!-- Підключаємо ethers.js через актуальний CDN jsdelivr -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+  <!-- Перевірка, що ethers завантажений -->
+  <script>
+    if (typeof ethers === "undefined") {
+      alert("ethers.js не завантажений! Перевір порядок підключення скриптів.");
+    }
+  </script>
+
+  <!-- Підключаємо твій основний скрипт -->
   <script src="app.js"></script>
 </body>
 </html>

@@ -18,7 +18,7 @@ function init() {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- сюди встав свій Infura Project ID
+        infuraId: "499eccaaa1c34321be3edd18295da9fa" // <- сюди встав свій Infura Project ID
       }
     }
   };
@@ -29,31 +29,27 @@ function init() {
   });
 }
 
-function shortAddress(address) {
-  if (!address) return "";
-  return address.slice(0, 6) + "..." + address.slice(-4);
-}
-
 async function connect() {
   try {
     const externalProvider = await web3Modal.connect();
+
+    // Якщо мобільний пристрій і відкрився MetaMask app, показуємо попередження
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      document.getElementById("mobileNotice").style.display = "block";
+    } else {
+      document.getElementById("mobileNotice").style.display = "none";
+    }
+
     provider = new ethers.providers.Web3Provider(externalProvider);
     signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     const userAddress = await signer.getAddress();
+    alert("Wallet connected: " + userAddress);
     document.getElementById("walletAddress").innerText = userAddress;
 
-    if (/Mobi|Android/i.test(navigator.userAgent)) {
-      alert("Wallet connected! Якщо відкрився MetaMask додаток, будь ласка, поверніться в браузер щоб продовжити.");
-      document.getElementById("mobileNotice").style.display = "block";
-    } else {
-      alert("Wallet connected: " + userAddress);
-    }
-
-    updateBalance();
-    updateTopDonors();
-
+    await updateBalance();
+    await updateTopDonors();
   } catch (err) {
     alert("Connection failed: " + err.message);
     console.error(err);
@@ -61,6 +57,11 @@ async function connect() {
 }
 
 async function donate() {
+  if (!signer) {
+    alert("Please connect your wallet first.");
+    return;
+  }
+
   const amount = document.getElementById("donateAmount").value;
   if (!amount || isNaN(amount) || Number(amount) <= 0) {
     alert("Enter a valid ETH amount");
@@ -74,8 +75,8 @@ async function donate() {
     });
     await tx.wait();
     alert("Donation successful!");
-    updateBalance();
-    updateTopDonors();
+    await updateBalance();
+    await updateTopDonors();
   } catch (err) {
     alert("Error: " + err.message);
     console.error(err);
@@ -83,42 +84,57 @@ async function donate() {
 }
 
 async function release() {
+  if (!contract) {
+    alert("Please connect your wallet first.");
+    return;
+  }
+
   try {
     const tx = await contract.release();
     await tx.wait();
     alert("Funds released!");
-    updateBalance();
+    await updateBalance();
   } catch (err) {
     alert("Error: " + err.message);
+    console.error(err);
+  }
+}
+
+async function updateBalance() {
+  if (!contract) {
+    document.getElementById("balance").innerText = "---";
+    return;
+  }
+  try {
+    const balance = await contract.getBalance();
+    const eth = ethers.utils.formatEther(balance);
+    document.getElementById("balance").innerText = parseFloat(eth).toFixed(4);
+  } catch {
+    document.getElementById("balance").innerText = "---";
   }
 }
 
 async function updateTopDonors() {
+  if (!contract) {
+    document.getElementById("topDonorsList").innerHTML = "<li>Connect wallet to see donors</li>";
+    return;
+  }
   try {
     const [d1, d2, d3] = await contract.getTopDonors();
     const list = document.getElementById("topDonorsList");
     list.innerHTML = "";
 
-    list.innerHTML += `<li>🥇 ${shortAddress(d1)}</li>`;
-    list.innerHTML += `<li>🥈 ${shortAddress(d2)}</li>`;
-    list.innerHTML += `<li>🥉 ${shortAddress(d3)}</li>`;
+    list.innerHTML += `<li>🥇 ${d1}</li>`;
+    list.innerHTML += `<li>🥈 ${d2}</li>`;
+    list.innerHTML += `<li>🥉 ${d3}</li>`;
   } catch (err) {
     console.error("Top donors error:", err);
     document.getElementById("topDonorsList").innerHTML = "<li>Failed to load top donors</li>";
   }
 }
 
-async function updateBalance() {
-  try {
-    const balance = await contract.getBalance();
-    const eth = ethers.utils.formatEther(balance);
-    document.getElementById("balance").innerText = parseFloat(eth).toFixed(4);
-  } catch (err) {
-    document.getElementById("balance").innerText = "---";
-  }
-}
-
 const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
+
 function updateCountdown() {
   const now = Math.floor(Date.now() / 1000);
   let secondsLeft = unlockTimestamp - now;

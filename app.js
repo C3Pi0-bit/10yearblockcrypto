@@ -1,130 +1,133 @@
-const ethereumAddressToReceive = "ТВОЯ_АДРЕСА_ТУТ_0x..."; // Замінити на твою адресу ETH
+const contractAddress = "0xEA561Dd7497500d7Ca445819C6cEb8C30763b811";
+const abi = [
+  { inputs: [{ internalType: "address", name: "_beneficiary", type: "address" }], stateMutability: "nonpayable", type: "constructor" },
+  { stateMutability: "payable", type: "receive" },
+  { inputs: [], name: "beneficiary", outputs: [{ internalType: "address", name: "", type: "address" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "getBalance", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "getTopDonors", outputs: [{ internalType: "address[3]", name: "", type: "address[3]" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "release", outputs: [], stateMutability: "nonpayable", type: "function" }
+];
 
-let provider;
-let signer;
-let walletAddress;
+let provider, signer, contract;
 
-const connectBtn = document.getElementById("connectBtn");
-const walletInfo = document.getElementById("walletInfo");
-const walletAddressSpan = document.getElementById("walletAddress");
-const donateAmountInput = document.getElementById("donateAmount");
-const sendBtn = document.getElementById("sendBtn");
-const statusP = document.getElementById("status");
+window.onload = () => {
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+};
 
-async function connectMetaMask() {
-  if (!window.ethereum) {
-    alert("MetaMask не встановлено! Будь ласка, встанови MetaMask.");
+async function connect() {
+  if (typeof window.ethereum === 'undefined') {
+    alert("Please install MetaMask.");
     return;
   }
 
   try {
-    await window.ethereum.request({ method: "eth_requestAccounts" });
     provider = new ethers.providers.Web3Provider(window.ethereum);
+    const accounts = await provider.send("eth_requestAccounts", []);
+
+    if (!accounts || accounts.length === 0) {
+      alert("No accounts found.");
+      return;
+    }
+
     signer = provider.getSigner();
-    walletAddress = await signer.getAddress();
+    contract = new ethers.Contract(contractAddress, abi, signer);
 
-    onWalletConnected();
-  } catch (error) {
-    alert("Підключення через MetaMask скасовано або сталася помилка.");
-    console.error(error);
+    const address = await signer.getAddress();
+    alert("Wallet connected: " + address);
+
+    updateBalance();
+    updateTopDonors();
+  } catch (err) {
+    if (err.code === 4001) {
+      alert("Connection request was rejected.");
+    } else {
+      alert("MetaMask connection failed. " + err.message);
+    }
+    console.error("MetaMask error:", err);
   }
 }
 
-async function connectWalletConnect() {
-  // Ініціалізація провайдера WalletConnect
-  const WalletConnectProvider = window.WalletConnectProvider.default;
-  const wcProvider = new WalletConnectProvider({
-    rpc: {
-      1: "https://mainnet.infura.io/v3/your_infura_project_id" // Заміни, якщо треба
-    },
-  });
-
-  try {
-    await wcProvider.enable();
-    provider = new ethers.providers.Web3Provider(wcProvider);
-    signer = provider.getSigner();
-    walletAddress = await signer.getAddress();
-
-    // Підписка на роз’єднання
-    wcProvider.on("disconnect", (code, reason) => {
-      resetUI();
-    });
-
-    onWalletConnected();
-  } catch (error) {
-    alert("Підключення через WalletConnect скасовано або сталася помилка.");
-    console.error(error);
-  }
-}
-
-function resetUI() {
-  walletInfo.classList.add("hidden");
-  connectBtn.disabled = false;
-  connectBtn.textContent = "Підключити гаманець";
-  walletAddressSpan.textContent = "";
-  donateAmountInput.value = "";
-  statusP.textContent = "";
-  provider = null;
-  signer = null;
-  walletAddress = null;
-}
-
-function onWalletConnected() {
-  connectBtn.disabled = true;
-  connectBtn.textContent = "Гаманець підключено";
-  walletInfo.classList.remove("hidden");
-  walletAddressSpan.textContent = walletAddress;
-  statusP.textContent = "";
-}
-
-async function sendDonation() {
-  statusP.textContent = "";
-
-  if (!signer) {
-    alert("Будь ласка, спочатку підключи гаманець.");
-    return;
-  }
-
-  let amountEth = donateAmountInput.value;
-  if (!amountEth || isNaN(amountEth) || Number(amountEth) <= 0) {
-    alert("Введи коректну суму для донату.");
+async function donate() {
+  const amount = document.getElementById("donateAmount").value;
+  if (!amount || isNaN(amount) || Number(amount) <= 0) {
+    alert("Enter a valid ETH amount");
     return;
   }
 
   try {
-    sendBtn.disabled = true;
-    statusP.textContent = "Очікування підтвердження транзакції...";
-
     const tx = await signer.sendTransaction({
-      to: ethereumAddressToReceive,
-      value: ethers.utils.parseEther(amountEth.toString())
+      to: contractAddress,
+      value: ethers.utils.parseEther(amount)
     });
-
-    statusP.textContent = `Транзакція відправлена. Хеш: ${tx.hash}`;
     await tx.wait();
-
-    statusP.textContent = "Донат успішно надіслано. Дякую!";
-  } catch (error) {
-    console.error(error);
-    statusP.textContent = "Помилка при відправці транзакції.";
-  } finally {
-    sendBtn.disabled = false;
+    alert("Donation successful!");
+    updateBalance();
+    updateTopDonors();
+  } catch (err) {
+    alert("Error: " + err.message);
+    console.error(err);
   }
 }
 
-// При кліку на кнопку "Підключити гаманець" показати вибір
-connectBtn.addEventListener("click", async () => {
-  const choice = prompt("Оберіть спосіб підключення:
-1 - MetaMask (браузер)
-2 - WalletConnect (мобільний)");
-
-  if (choice === "1") {
-    await connectMetaMask();
-  } else if (choice === "2") {
-    await connectWalletConnect();
-  } else {
-    alert("Вибір не розпізнано.");
+async function release() {
+  try {
+    const tx = await contract.release();
+    await tx.wait();
+    alert("Funds released!");
+    updateBalance();
+  } catch (err) {
+    alert("Error: " + err.message);
   }
-});
+}
 
-sendBtn.addEventListener("click", sendDonation);
+async function updateTopDonors() {
+  try {
+    const [d1, d2, d3] = await contract.getTopDonors();
+    const list = document.getElementById("topDonorsList");
+    list.innerHTML = "";
+
+    function shortAddr(addr) {
+      if (!addr || addr === "0x0000000000000000000000000000000000000000") return "No donor";
+      return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
+    list.innerHTML += `<li>🥇 ${shortAddr(d1)}</li>`;
+    list.innerHTML += `<li>🥈 ${shortAddr(d2)}</li>`;
+    list.innerHTML += `<li>🥉 ${shortAddr(d3)}</li>`;
+  } catch (err) {
+    console.error("Top donors error:", err);
+    document.getElementById("topDonorsList").innerHTML = "<li>Failed to load top donors</li>";
+  }
+}
+
+async function updateBalance() {
+  try {
+    const balance = await contract.getBalance();
+    const eth = ethers.utils.formatEther(balance);
+    document.getElementById("balance").innerText = parseFloat(eth).toFixed(4);
+  } catch (err) {
+    document.getElementById("balance").innerText = "---";
+  }
+}
+
+const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
+function updateCountdown() {
+  const now = Math.floor(Date.now() / 1000);
+  let secondsLeft = unlockTimestamp - now;
+
+  if (secondsLeft < 0) {
+    document.getElementById("countdown").innerText = "Unlocked!";
+    return;
+  }
+
+  const days = Math.floor(secondsLeft / (3600 * 24));
+  secondsLeft %= 3600 * 24;
+  const hours = Math.floor(secondsLeft / 3600);
+  secondsLeft %= 3600;
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+
+  document.getElementById("countdown").innerText =
+    `${days} days ${hours}h ${minutes}m ${seconds}s`;
+}

@@ -4,12 +4,90 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>EducationVault Interface</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #e6f0ff, #fdf6e3);
+      color: #222;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #003366;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffffcc;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    button {
+      background-color: #003366;
+      color: white;
+      border: none;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    button:hover {
+      background-color: #0059b3;
+    }
+    input[type="number"] {
+      padding: 0.7rem;
+      width: 100%;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+    .section {
+      margin-top: 2rem;
+    }
+    .description {
+      background-color: #f9f9f9;
+      padding: 1rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      border-left: 4px solid #003366;
+      max-height: none;
+    }
+    .top-donors {
+      background: #e0f0ff;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+      color: #003366;
+    }
+    .top-donors h3 {
+      margin-top: 0;
+    }
+    #contractAddress {
+      display: inline-block;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+      font-weight: bold;
+      font-family: monospace;
+    }
+    /* Гарантуємо, що кнопка завжди зверху та клікабельна */
+    button#connectBtn {
+      position: relative;
+      z-index: 1000;
+    }
+  </style>
 </head>
 <body>
   <h1>💼 Education Vault</h1>
   <div class="container">
-    <p><b>Contract Address:</b> <span id="contractAddress">Loading...</span></p>
+    <p><b>Contract Address:</b> <span id="contractAddress">0xEA561Dd7497500d7Ca445819C6cEb8C30763b811</span></p>
 
     <div class="description">
       <p>Hello my dear friend! If you are here, you are a crypto-human — and so am I! I deeply believe in cryptocurrency, and that’s why I created this smart contract for donations, which will be locked for 10 whole years!!!</p>
@@ -20,7 +98,7 @@
 
     <div class="section">
       <button id="connectBtn">🔌 Connect Wallet</button>
-      <p>Connected Wallet: <span id="walletAddress">Not connected</span></p>
+      <p id="walletAddress" style="margin-top: 0.5rem; font-family: monospace; font-weight: bold;"></p>
     </div>
 
     <p>If the wallet does not connect, I leave the wallet address:</p>
@@ -54,25 +132,152 @@
     </div>
   </div>
 
-  <!-- ethers.js -->
+  <!-- Підключаємо ethers.js та web3modal -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-
-  <!-- Web3Modal and WalletConnect -->
   <script src="https://unpkg.com/web3modal@1.9.5/dist/index.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
-  <script src="app.js"></script>
-
   <script>
-    // Відображення скороченої адреси контракту при завантаженні
-    const fullContractAddress = "0xEA561Dd7497500d7Ca445819C6cEb8C30763b811";
+    const contractAddress = "0xEA561Dd7497500d7Ca445819C6cEb8C30763b811";
+    const abi = [
+      { inputs: [{ internalType: "address", name: "_beneficiary", type: "address" }], stateMutability: "nonpayable", type: "constructor" },
+      { stateMutability: "payable", type: "receive" },
+      { inputs: [], name: "beneficiary", outputs: [{ internalType: "address", name: "", type: "address" }], stateMutability: "view", type: "function" },
+      { inputs: [], name: "getBalance", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+      { inputs: [], name: "getTopDonors", outputs: [{ internalType: "address[3]", name: "", type: "address[3]" }], stateMutability: "view", type: "function" },
+      { inputs: [], name: "release", outputs: [], stateMutability: "nonpayable", type: "function" }
+    ];
+
+    let provider, signer, contract, web3Modal;
 
     function shortAddress(address) {
       if (!address) return "";
       return address.slice(0, 6) + "..." + address.slice(-4);
     }
 
-    document.getElementById("contractAddress").innerText = shortAddress(fullContractAddress);
+    function init() {
+      const providerOptions = {
+        walletconnect: {
+          package: window.WalletConnectProvider.default,
+          options: {
+            infuraId: "YOUR_INFURA_ID" // <- заміни тут на свій Infura Project ID
+          }
+        }
+      };
+
+      web3Modal = new window.Web3Modal.default({
+        cacheProvider: false,
+        providerOptions
+      });
+    }
+
+    window.onload = () => {
+      init();
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+
+      document.getElementById("connectBtn").onclick = connect;
+      document.getElementById("donateBtn").onclick = donate;
+      document.getElementById("releaseBtn").onclick = release;
+    };
+
+    async function connect() {
+      try {
+        const externalProvider = await web3Modal.connect();
+        provider = new ethers.providers.Web3Provider(externalProvider);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, abi, signer);
+
+        const address = await signer.getAddress();
+        alert("Wallet connected: " + shortAddress(address));
+        document.getElementById("walletAddress").innerText = shortAddress(address);
+
+        updateBalance();
+        updateTopDonors();
+      } catch (err) {
+        alert("Connection failed: " + err.message);
+        console.error(err);
+      }
+    }
+
+    async function donate() {
+      const amount = document.getElementById("donateAmount").value;
+      if (!amount || isNaN(amount) || Number(amount) <= 0) {
+        alert("Enter a valid ETH amount");
+        return;
+      }
+
+      try {
+        const tx = await signer.sendTransaction({
+          to: contractAddress,
+          value: ethers.utils.parseEther(amount)
+        });
+        await tx.wait();
+        alert("Donation successful!");
+        updateBalance();
+        updateTopDonors();
+      } catch (err) {
+        alert("Error: " + err.message);
+        console.error(err);
+      }
+    }
+
+    async function release() {
+      try {
+        const tx = await contract.release();
+        await tx.wait();
+        alert("Funds released!");
+        updateBalance();
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    async function updateTopDonors() {
+      try {
+        const [d1, d2, d3] = await contract.getTopDonors();
+        const list = document.getElementById("topDonorsList");
+        list.innerHTML = "";
+
+        list.innerHTML += `<li>🥇 ${shortAddress(d1)}</li>`;
+        list.innerHTML += `<li>🥈 ${shortAddress(d2)}</li>`;
+        list.innerHTML += `<li>🥉 ${shortAddress(d3)}</li>`;
+      } catch (err) {
+        console.error("Top donors error:", err);
+        document.getElementById("topDonorsList").innerHTML = "<li>Failed to load top donors</li>";
+      }
+    }
+
+    async function updateBalance() {
+      try {
+        const balance = await contract.getBalance();
+        const eth = ethers.utils.formatEther(balance);
+        document.getElementById("balance").innerText = parseFloat(eth).toFixed(4);
+      } catch (err) {
+        document.getElementById("balance").innerText = "---";
+      }
+    }
+
+    const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
+    function updateCountdown() {
+      const now = Math.floor(Date.now() / 1000);
+      let secondsLeft = unlockTimestamp - now;
+
+      if (secondsLeft < 0) {
+        document.getElementById("countdown").innerText = "Unlocked!";
+        return;
+      }
+
+      const days = Math.floor(secondsLeft / (3600 * 24));
+      secondsLeft %= 3600 * 24;
+      const hours = Math.floor(secondsLeft / 3600);
+      secondsLeft %= 3600;
+      const minutes = Math.floor(secondsLeft / 60);
+      const seconds = secondsLeft % 60;
+
+      document.getElementById("countdown").innerText =
+        `${days} days ${hours}h ${minutes}m ${seconds}s`;
+    }
   </script>
 </body>
 </html>

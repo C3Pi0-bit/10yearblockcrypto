@@ -20,7 +20,7 @@ function init() {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- заміни на свій Infura Project ID
+        infuraId: "499eccaaa1c34321be3edd18295da9fa" // <- заміни на свій Infura Project ID
       }
     }
   };
@@ -35,6 +35,10 @@ window.onload = () => {
   init();
   updateCountdown();
   setInterval(updateCountdown, 1000);
+
+  document.getElementById("connectBtn").onclick = connect;
+  document.getElementById("donateBtn").onclick = donate;
+  document.getElementById("releaseBtn").onclick = release;
 };
 
 async function connect() {
@@ -46,7 +50,7 @@ async function connect() {
 
     const address = await signer.getAddress();
     alert("Wallet connected: " + shortAddress(address));
-    document.getElementById("walletAddress").innerText = shortAddress(address);
+    document.getElementById("walletAddress").innerText = address; // Показує повну адресу
 
     updateBalance();
     updateTopDonors();

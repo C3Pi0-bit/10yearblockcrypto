@@ -11,8 +11,10 @@ All funds are **locked for 10 years** and will be released according to a reward
 ## 🌟 Features
 - ⏳ **10-Year Lock** — Funds are securely locked until **August 4, 2035**.
 - 🏆 **Top Donor Rewards** — After release:
-  - Option 1: 25% to the biggest donor.
-  - Option 2: 15%, 10%, 5% to the top three donors.
+  - Option 1: 15% to the biggest donor.
+  - Option 2: 10% to the second major donor
+  - Option 3: 5% to the third largest donor
+  - of the total amount of all donations over 10 years
 - 💰 **Direct ETH Donations** via MetaMask.
 - 📊 **Live Balance & Countdown** displayed on the website.
 

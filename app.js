@@ -12,31 +12,49 @@ let provider;
 let signer;
 let contract;
 let web3Modal;
-
-function init() {
-  const providerOptions = {
-    walletconnect: {
-      package: window.WalletConnectProvider.default,
-      options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa" // <- заміни на свій Infura ID
-      }
-    }
-  };
-
-  web3Modal = new window.Web3Modal.default({
-    cacheProvider: false,
-    providerOptions
-  });
-}
+let externalProvider;
 
 function shortAddress(address) {
   if (!address) return "";
   return address.slice(0, 6) + "..." + address.slice(-4);
 }
 
+function init() {
+  const providerOptions = {
+    walletconnect: {
+      package: window.WalletConnectProvider.default,
+      options: {
+        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // Встав свій Infura Project ID сюди
+      }
+    }
+  };
+
+  web3Modal = new window.Web3Modal.default({
+    cacheProvider: true,   // Вмикаємо кешування провайдера для автопідключення
+    providerOptions
+  });
+}
+
 async function connect() {
   try {
-    const externalProvider = await web3Modal.connect();
+    externalProvider = await web3Modal.connect();
+
+    // Відловлюємо зміну акаунтів (коли юзер змінює акаунт у гаманці)
+    externalProvider.on("accountsChanged", (accounts) => {
+      if (accounts.length > 0) {
+        document.getElementById("walletAddress").innerText = accounts[0];
+        updateBalance();
+        updateTopDonors();
+      } else {
+        document.getElementById("walletAddress").innerText = "";
+      }
+    });
+
+    // Відловлюємо зміну мережі (chain)
+    externalProvider.on("chainChanged", (chainId) => {
+      window.location.reload();
+    });
+
     provider = new ethers.providers.Web3Provider(externalProvider);
     signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
@@ -45,78 +63,37 @@ async function connect() {
     alert("Wallet connected: " + shortAddress(userAddress));
     document.getElementById("walletAddress").innerText = userAddress;
 
-    // Ховаємо повідомлення для мобільних після успішного підключення
-    document.getElementById("mobileNotice").style.display = "none";
+    // Показуємо, що мобільний користувач повинен повернутися у браузер, якщо MetaMask відкрився автоматично
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      document.getElementById("mobileNotice").style.display = "block";
+    } else {
+      document.getElementById("mobileNotice").style.display = "none";
+    }
 
     updateBalance();
     updateTopDonors();
+
   } catch (err) {
     alert("Connection failed: " + err.message);
     console.error(err);
   }
 }
 
-async function donate() {
-  const amount = document.getElementById("donateAmount").value;
-  if (!amount || isNaN(amount) || Number(amount) <= 0) {
-    alert("Enter a valid ETH amount");
-    return;
-  }
-  if (!signer) {
-    alert("Please connect your wallet first");
-    return;
-  }
-  try {
-    const tx = await signer.sendTransaction({
-      to: contractAddress,
-      value: ethers.utils.parseEther(amount)
-    });
-    await tx.wait();
-    alert("Donation successful!");
-    updateBalance();
-    updateTopDonors();
-  } catch (err) {
-    alert("Error: " + err.message);
-    console.error(err);
-  }
-}
-
-async function release() {
-  if (!contract) {
-    alert("Please connect your wallet first");
-    return;
-  }
-  try {
-    const tx = await contract.release();
-    await tx.wait();
-    alert("Funds released!");
-    updateBalance();
-  } catch (err) {
-    alert("Error: " + err.message);
-    console.error(err);
-  }
-}
-
 async function updateBalance() {
-  if (!contract) {
-    document.getElementById("balance").innerText = "---";
-    return;
-  }
   try {
+    if (!contract) return;
     const balance = await contract.getBalance();
     const eth = ethers.utils.formatEther(balance);
     document.getElementById("balance").innerText = parseFloat(eth).toFixed(4);
-  } catch {
+  } catch (err) {
     document.getElementById("balance").innerText = "---";
+    console.error("Failed to update balance:", err);
   }
 }
 
 async function updateTopDonors() {
-  if (!contract) {
-    document.getElementById("topDonorsList").innerHTML = "<li>Connect wallet to see top donors</li>";
-    return;
-  }
   try {
+    if (!contract) return;
     const [d1, d2, d3] = await contract.getTopDonors();
     const list = document.getElementById("topDonorsList");
     list.innerHTML = "";
@@ -124,8 +101,51 @@ async function updateTopDonors() {
     list.innerHTML += `<li>🥈 ${shortAddress(d2)}</li>`;
     list.innerHTML += `<li>🥉 ${shortAddress(d3)}</li>`;
   } catch (err) {
-    console.error("Top donors error:", err);
+    console.error("Failed to update top donors:", err);
     document.getElementById("topDonorsList").innerHTML = "<li>Failed to load top donors</li>";
+  }
+}
+
+async function donate() {
+  try {
+    const amount = document.getElementById("donateAmount").value;
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      alert("Enter a valid ETH amount");
+      return;
+    }
+    if (!signer) {
+      alert("Please connect your wallet first");
+      return;
+    }
+
+    const tx = await signer.sendTransaction({
+      to: contractAddress,
+      value: ethers.utils.parseEther(amount)
+    });
+    await tx.wait();
+
+    alert("Donation successful!");
+    updateBalance();
+    updateTopDonors();
+  } catch (err) {
+    alert("Donation failed: " + err.message);
+    console.error(err);
+  }
+}
+
+async function release() {
+  try {
+    if (!contract) {
+      alert("Please connect your wallet first");
+      return;
+    }
+    const tx = await contract.release();
+    await tx.wait();
+    alert("Funds released!");
+    updateBalance();
+  } catch (err) {
+    alert("Release failed: " + err.message);
+    console.error(err);
   }
 }
 
@@ -152,10 +172,16 @@ function updateCountdown() {
 
 window.onload = () => {
   init();
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
 
   document.getElementById("connectBtn").onclick = connect;
   document.getElementById("donateBtn").onclick = donate;
   document.getElementById("releaseBtn").onclick = release;
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // Автоматичне підключення якщо провайдер кешовано
+  if (web3Modal.cachedProvider) {
+    connect();
+  }
 };

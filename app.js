@@ -8,38 +8,35 @@ const abi = [
   { inputs: [], name: "release", outputs: [], stateMutability: "nonpayable", type: "function" }
 ];
 
-let web3Modal;
-let provider;
-let signer;
-let contract;
+let provider, signer, contract, web3Modal;
 
-const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
-
-window.onload = () => {
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
-
+function init() {
   const providerOptions = {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa" // Встав свій Infura Project ID сюди
+        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- заміни на свій Infura Project ID
       }
     }
   };
 
   web3Modal = new window.Web3Modal.default({
-    cacheProvider: false,
+    cacheProvider: false,  // завжди показуємо вибір гаманця
     providerOptions
   });
+}
+
+window.onload = () => {
+  init();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
 };
 
 async function connect() {
   try {
-    provider = await web3Modal.connect();
-    const ethersProvider = new ethers.providers.Web3Provider(provider);
-    signer = ethersProvider.getSigner();
-
+    const externalProvider = await web3Modal.connect();  // відкриває вибір гаманця
+    provider = new ethers.providers.Web3Provider(externalProvider);
+    signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     const address = await signer.getAddress();
@@ -47,29 +44,8 @@ async function connect() {
 
     updateBalance();
     updateTopDonors();
-
-    provider.on("accountsChanged", (accounts) => {
-      if (accounts.length === 0) {
-        alert("Please connect to wallet.");
-      } else {
-        alert("Account changed to " + accounts[0]);
-        updateBalance();
-        updateTopDonors();
-      }
-    });
-
-    provider.on("chainChanged", (chainId) => {
-      window.location.reload();
-    });
-
   } catch (err) {
-    if (err === "Modal closed by user") {
-      alert("Connection cancelled by user.");
-    } else if (err.code === 4001) {
-      alert("Connection request was rejected.");
-    } else {
-      alert("Wallet connection failed: " + err.message);
-    }
+    alert("Connection failed: " + err.message);
     console.error(err);
   }
 }
@@ -137,6 +113,7 @@ async function updateBalance() {
   }
 }
 
+const unlockTimestamp = Math.floor(new Date("2035-08-04T00:00:00Z").getTime() / 1000);
 function updateCountdown() {
   const now = Math.floor(Date.now() / 1000);
   let secondsLeft = unlockTimestamp - now;

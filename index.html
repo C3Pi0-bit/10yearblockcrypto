@@ -54,37 +54,33 @@
     </div>
   </div>
 
-  <!-- Підключаємо ethers.js -->
+  <!-- ethers.js -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
-  <!-- Підключаємо Web3Modal і WalletConnect -->
+  <!-- Web3Modal and WalletConnect -->
   <script src="https://unpkg.com/web3modal@1.9.5/dist/index.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
-  <!-- Перевірка, що ethers завантажений -->
-  <script>
-    if (typeof ethers === "undefined") {
-      alert("ethers.js не завантажений! Перевір порядок підключення скриптів.");
-    }
-  </script>
-
-  <!-- Підключаємо твій основний скрипт -->
   <script src="app.js"></script>
 
   <script>
     document.getElementById("connectBtn").addEventListener("click", async () => {
       await connect();
-      const addressSpan = document.getElementById("walletAddress");
       try {
         const addr = await signer.getAddress();
-        addressSpan.innerText = addr;
+        document.getElementById("walletAddress").innerText = shortAddress(addr);
       } catch {
-        addressSpan.innerText = "Not connected";
+        document.getElementById("walletAddress").innerText = "Not connected";
       }
     });
 
     document.getElementById("donateBtn").addEventListener("click", donate);
     document.getElementById("releaseBtn").addEventListener("click", release);
+
+    function shortAddress(address) {
+      if (!address) return "";
+      return address.slice(0, 6) + "..." + address.slice(-4);
+    }
   </script>
 </body>
 </html>

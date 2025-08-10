@@ -18,15 +18,20 @@ function init() {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- встав сюди свій Infura Project ID
+        infuraId: "499eccaaa1c34321be3edd18295da9fa" // <- встав свій Infura Project ID сюди
       }
     }
   };
 
   web3Modal = new window.Web3Modal.default({
-    cacheProvider: true,  // Вмикаємо кешування підключеного гаманця
+    cacheProvider: true,
     providerOptions
   });
+
+  // Показуємо повідомлення для мобільних
+  if (/Mobi|Android/i.test(navigator.userAgent)) {
+    document.getElementById("mobileNotice").style.display = "block";
+  }
 }
 
 function shortAddress(address) {
@@ -42,11 +47,12 @@ async function connect() {
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     const userAddress = await signer.getAddress();
-    alert("Wallet connected: " + shortAddress(userAddress));
     document.getElementById("walletAddress").innerText = userAddress;
 
     await updateBalance();
     await updateTopDonors();
+
+    alert("Wallet connected: " + shortAddress(userAddress));
   } catch (err) {
     alert("Connection failed: " + err.message);
     console.error(err);

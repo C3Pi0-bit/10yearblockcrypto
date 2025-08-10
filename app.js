@@ -15,7 +15,7 @@ function init() {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- твій Infura Project ID
+        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- встав сюди свій Infura Project ID
       }
     }
   };
@@ -40,7 +40,7 @@ async function connect() {
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     const address = await signer.getAddress();
-    alert("Wallet connected: " + address);
+    alert("Wallet connected: " + shortAddress(address));
 
     updateBalance();
     updateTopDonors();
@@ -132,4 +132,10 @@ function updateCountdown() {
 
   document.getElementById("countdown").innerText =
     `${days} days ${hours}h ${minutes}m ${seconds}s`;
+}
+
+// Якщо потрібно скорочувати адресу і тут
+function shortAddress(address) {
+  if (!address) return "";
+  return address.slice(0, 6) + "..." + address.slice(-4);
 }

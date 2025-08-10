@@ -20,10 +20,8 @@
 
     <div class="section">
       <button id="connectBtn">🔌 Connect Wallet</button>
-      <p id="mobileNotice" style="color: red; font-weight: bold; display: none;">
-        Якщо ви на мобільному і відкрився гаманець MetaMask, поверніться в браузер щоб продовжити роботу з сайтом.
-      </p>
-      <p id="walletAddress" style="margin-top: 0.5rem; font-family: monospace; font-weight: bold;"></p>
+      <p id="mobileNotice">Якщо ви на мобільному і відкрився гаманець MetaMask, поверніться в браузер щоб продовжити роботу з сайтом.</p>
+      <p id="walletAddress"></p>
     </div>
 
     <p>If the wallet does not connect, here is the wallet address:</p>
@@ -35,7 +33,7 @@
 
     <div class="section">
       <h3>⏳ Time until unlock:</h3>
-      <div id="countdown" style="font-size: 1.2rem; font-weight: bold; color: #003366;">Loading...</div>
+      <div id="countdown">Loading...</div>
     </div>
 
     <div class="section">
@@ -51,9 +49,7 @@
 
     <div class="section top-donors">
       <h3>🏆 Top 3 Donors:</h3>
-      <ol id="topDonorsList">
-        <li>Loading...</li>
-      </ol>
+      <ol id="topDonorsList"><li>Loading...</li></ol>
     </div>
   </div>
 
@@ -62,42 +58,7 @@
   <script src="https://unpkg.com/web3modal@1.9.5/dist/index.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
-  <script>
-    let web3Modal, provider, signer;
-    const INFURA_ID = "ВАШ_INFURA_ID"; // Замініть на свій
-
-    function init() {
-      const providerOptions = {
-        walletconnect: {
-          package: window.WalletConnectProvider.default,
-          options: {
-            infuraId: INFURA_ID
-          }
-        }
-      };
-      web3Modal = new window.Web3Modal.default({
-        cacheProvider: false,
-        providerOptions
-      });
-    }
-
-    async function connectWallet() {
-      try {
-        provider = await web3Modal.connect();
-        const ethersProvider = new ethers.providers.Web3Provider(provider);
-        signer = ethersProvider.getSigner();
-        const address = await signer.getAddress();
-        document.getElementById("walletAddress").innerText = `Connected: ${address}`;
-        if (/Mobi|Android/i.test(navigator.userAgent)) {
-          document.getElementById("mobileNotice").style.display = "block";
-        }
-      } catch (err) {
-        console.error("Wallet connection failed:", err);
-      }
-    }
-
-    document.getElementById("connectBtn").addEventListener("click", connectWallet);
-    window.addEventListener("load", init);
-  </script>
+  <!-- Підключаємо наш скрипт -->
+  <script src="app.js"></script>
 </body>
 </html>

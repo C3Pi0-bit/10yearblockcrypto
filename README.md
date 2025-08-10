@@ -45,5 +45,5 @@ All funds are **locked for 10 years** and will be released according to a reward
 
 ## 📬 Contact
 If you want to support or collaborate:
-- Email: your.email@example.com
-- Twitter: [@YourHandle](https://twitter.com/YourHandle)
+- Email: mybrainbattle@gmail.com
+- Twitter: [@10yearhold] https://x.com/10yearhold?t=ByNoZUDfvPCsDpogBCr5Nw&s=35

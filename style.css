@@ -64,11 +64,9 @@ input[type="number"] {
 /* Додаємо стиль для адреси контракту, щоб не вилізала за межі */
 #contractAddress {
   display: inline-block;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle;
   font-weight: bold;
   font-family: monospace;
+  word-break: break-all;
 }
+
+

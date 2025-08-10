@@ -10,17 +10,12 @@ const abi = [
 
 let provider, signer, contract, web3Modal;
 
-function shortAddress(address) {
-  if (!address) return "";
-  return address.slice(0, 6) + "..." + address.slice(-4);
-}
-
 function init() {
   const providerOptions = {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- заміни на свій Infura Project ID
+        infuraId: "ТВОЙ_INFURA_ID"  // <- твій Infura Project ID
       }
     }
   };
@@ -45,8 +40,7 @@ async function connect() {
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     const address = await signer.getAddress();
-    alert("Wallet connected: " + shortAddress(address));
-    document.getElementById("walletAddress").innerText = shortAddress(address);
+    alert("Wallet connected: " + address);
 
     updateBalance();
     updateTopDonors();
@@ -95,9 +89,14 @@ async function updateTopDonors() {
     const list = document.getElementById("topDonorsList");
     list.innerHTML = "";
 
-    list.innerHTML += `<li>🥇 ${shortAddress(d1)}</li>`;
-    list.innerHTML += `<li>🥈 ${shortAddress(d2)}</li>`;
-    list.innerHTML += `<li>🥉 ${shortAddress(d3)}</li>`;
+    function shortAddr(addr) {
+      if (!addr || addr === "0x0000000000000000000000000000000000000000") return "No donor";
+      return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
+    list.innerHTML += `<li>🥇 ${shortAddr(d1)}</li>`;
+    list.innerHTML += `<li>🥈 ${shortAddr(d2)}</li>`;
+    list.innerHTML += `<li>🥉 ${shortAddr(d3)}</li>`;
   } catch (err) {
     console.error("Top donors error:", err);
     document.getElementById("topDonorsList").innerHTML = "<li>Failed to load top donors</li>";

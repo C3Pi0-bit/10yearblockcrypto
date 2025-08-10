@@ -5,10 +5,12 @@ body {
   margin: 0;
   padding: 2rem;
 }
+
 h1 {
   text-align: center;
   color: #003366;
 }
+
 .container {
   max-width: 600px;
   margin: 0 auto;
@@ -17,6 +19,7 @@ h1 {
   padding: 2rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
 button {
   background-color: #003366;
   color: white;
@@ -27,9 +30,11 @@ button {
   cursor: pointer;
   margin-top: 0.5rem;
 }
+
 button:hover {
   background-color: #0059b3;
 }
+
 input[type="number"] {
   padding: 0.7rem;
   width: 100%;
@@ -38,9 +43,11 @@ input[type="number"] {
   border: 1px solid #ccc;
   border-radius: 10px;
 }
+
 .section {
   margin-top: 2rem;
 }
+
 .description {
   background-color: #f9f9f9;
   padding: 1rem;
@@ -50,6 +57,7 @@ input[type="number"] {
   border-left: 4px solid #003366;
   max-height: none;
 }
+
 .top-donors {
   background: #e0f0ff;
   padding: 1rem;
@@ -57,11 +65,12 @@ input[type="number"] {
   margin-top: 1rem;
   color: #003366;
 }
+
 .top-donors h3 {
   margin-top: 0;
 }
 
-/* Додаємо стиль для адреси контракту, щоб не вилізала за межі */
+/* Стиль для адреси контракту, щоб не вилізала за межі блоку */
 #contractAddress {
   display: inline-block;
   max-width: 100%;

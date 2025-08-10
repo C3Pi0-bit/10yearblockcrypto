@@ -15,7 +15,7 @@ function init() {
     walletconnect: {
       package: window.WalletConnectProvider.default,
       options: {
-        infuraId: "ТВОЙ_INFURA_ID"  // <- заміни на свій Infura Project ID
+        infuraId: "499eccaaa1c34321be3edd18295da9fa"  // <- заміни на свій Infura Project ID
       }
     }
   };
